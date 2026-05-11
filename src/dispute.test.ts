@@ -7,6 +7,10 @@ describe("invoice dispute packet", () => {
     expect(lineTotal({ quantity: 42, unitPrice: 128 })).toBe(5376);
   });
 
+  it("keeps decimal unit price math rounded to currency cents", () => {
+    expect(lineTotal({ quantity: 3, unitPrice: 0.1 })).toBe(0.3);
+  });
+
   it("flags quantity, unit price, and unauthorized freight variance", () => {
     const packet = buildDisputePacket(disputeFixture);
 

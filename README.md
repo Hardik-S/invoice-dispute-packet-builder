@@ -39,6 +39,7 @@ npm run preview
 - The first slice uses one carefully explained dispute instead of a broad invoice dashboard because the queue acceptance criteria prioritize a packet, variance rationale, source evidence, and memo output.
 - The memo is generated from deterministic fixture logic so the public demo can be verified without API keys or hidden model behavior.
 - The UI separates invoice facts, source evidence, and suggested email copy so a reviewer can inspect where each claim came from.
+- Monetary calculations are rounded to cents at each dispute boundary so decimal unit prices cannot leak JavaScript floating-point tails into packet totals.
 - The app remains public because all data is synthetic and no sensitive finance systems are connected.
 
 ## Limitations
