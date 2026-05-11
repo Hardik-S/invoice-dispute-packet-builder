@@ -21,8 +21,12 @@ export type DisputePacket = {
 
 const currency = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 
+function money(value: number): number {
+  return Math.round((value + Number.EPSILON) * 100) / 100;
+}
+
 export function lineTotal(line: Pick<InvoiceLine, "quantity" | "unitPrice">): number {
-  return line.quantity * line.unitPrice;
+  return money(line.quantity * line.unitPrice);
 }
 
 function findPoLine(sku: string, poLines: PurchaseOrderLine[]) {
@@ -49,8 +53,8 @@ export function buildDisputePacket(fixture = disputeFixture): DisputePacket {
     const expectedQuantity = poLine?.approvedQuantity ?? acceptedQuantity;
     const expectedUnitPrice = poLine?.approvedUnitPrice ?? 0;
     const invoiceAmount = lineTotal(invoiceLine);
-    const expectedAmount = expectedQuantity * expectedUnitPrice;
-    const delta = invoiceAmount - expectedAmount;
+    const expectedAmount = money(expectedQuantity * expectedUnitPrice);
+    const delta = money(invoiceAmount - expectedAmount);
 
     if (delta <= 0) {
       return [];
@@ -84,9 +88,9 @@ export function buildDisputePacket(fixture = disputeFixture): DisputePacket {
     } satisfies Variance];
   });
 
-  const invoiceTotal = fixture.invoiceLines.reduce((sum, line) => sum + lineTotal(line), 0);
-  const expectedTotal = invoiceTotal - variances.reduce((sum, item) => sum + item.delta, 0);
-  const disputedTotal = invoiceTotal - expectedTotal;
+  const invoiceTotal = money(fixture.invoiceLines.reduce((sum, line) => sum + lineTotal(line), 0));
+  const expectedTotal = money(invoiceTotal - variances.reduce((sum, item) => sum + item.delta, 0));
+  const disputedTotal = money(invoiceTotal - expectedTotal);
 
   return {
     invoiceTotal,
