@@ -102,6 +102,17 @@ export function buildDisputePacket(fixture = disputeFixture): DisputePacket {
 }
 
 export function buildMemo(vendor: string, invoiceId: string, disputedTotal: number, variances: Variance[]): string {
+  if (variances.length === 0) {
+    return [
+      `Subject: Dispute packet for ${invoiceId}`,
+      "",
+      `Hi ${vendor} team,`,
+      "",
+      "No positive invoice variances were found for review.",
+      "No vendor-facing dispute action is recommended from this packet."
+    ].join("\n");
+  }
+
   const bullets = variances.map((variance) => `- ${variance.label}: dispute ${currency.format(variance.delta)} because ${variance.rationale}.`).join("\n");
 
   return [

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildDisputePacket, formatCurrency, lineTotal } from "./dispute";
+import { buildDisputePacket, buildMemo, formatCurrency, lineTotal } from "./dispute";
 import { disputeFixture } from "./fixtures";
 
 describe("invoice dispute packet", () => {
@@ -28,5 +28,13 @@ describe("invoice dispute packet", () => {
     expect(packet.memo).toContain("holding $1,216.00");
     expect(packet.memo).toContain("Rush freight surcharge");
     expect(packet.variances[1].evidence.join(" ")).toContain("do not approve rush freight");
+  });
+
+  it("makes no-dispute memos explicit when no positive variances are found", () => {
+    const memo = buildMemo("Aster Supply Co.", "INV-00001", 0, []);
+
+    expect(memo).toContain("No positive invoice variances were found for review.");
+    expect(memo).toContain("No vendor-facing dispute action is recommended from this packet.");
+    expect(memo).not.toContain("holding $0.00");
   });
 });

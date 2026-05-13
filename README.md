@@ -40,6 +40,7 @@ npm run preview
 - The memo is generated from deterministic fixture logic so the public demo can be verified without API keys or hidden model behavior.
 - The UI separates invoice facts, source evidence, and suggested email copy so a reviewer can inspect where each claim came from.
 - Monetary calculations are rounded to cents at each dispute boundary so decimal unit prices cannot leak JavaScript floating-point tails into packet totals.
+- Empty dispute packets use an explicit no-action memo so a reviewer does not receive a blank bullet section or a misleading zero-dollar hold instruction.
 - The app remains public because all data is synthetic and no sensitive finance systems are connected.
 
 ## Limitations
