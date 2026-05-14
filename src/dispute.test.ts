@@ -21,6 +21,37 @@ describe("invoice dispute packet", () => {
     expect(packet.variances[0].rationale).toContain(formatCurrency(128));
   });
 
+  it("classifies small positive disputes as low severity", () => {
+    const packet = buildDisputePacket({
+      ...disputeFixture,
+      invoiceLines: [
+        {
+          sku: "TEMP-PROBE",
+          description: "Temperature probe",
+          quantity: 1,
+          unitPrice: 84
+        }
+      ],
+      purchaseOrderLines: [
+        {
+          sku: "TEMP-PROBE",
+          description: "Temperature probe",
+          quantity: 1,
+          unitPrice: 60,
+          approvedQuantity: 1,
+          approvedUnitPrice: 60
+        }
+      ],
+      deliveryProof: {
+        ...disputeFixture.deliveryProof,
+        acceptedSkus: [{ sku: "TEMP-PROBE", quantity: 1 }]
+      }
+    });
+
+    expect(packet.disputedTotal).toBe(24);
+    expect(packet.variances[0].severity).toBe("low");
+  });
+
   it("builds an email-safe memo with source-specific rationale", () => {
     const packet = buildDisputePacket(disputeFixture);
 
