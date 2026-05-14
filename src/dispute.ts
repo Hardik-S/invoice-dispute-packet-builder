@@ -46,6 +46,18 @@ function findEmailEvidence(sku: string, notes: EmailNote[]) {
     .map((note) => `${note.sentAt} ${note.subject}: ${note.excerpt}`);
 }
 
+function classifySeverity(delta: number): Variance["severity"] {
+  if (delta >= 600) {
+    return "high";
+  }
+
+  if (delta >= 100) {
+    return "medium";
+  }
+
+  return "low";
+}
+
 export function buildDisputePacket(fixture = disputeFixture): DisputePacket {
   const variances = fixture.invoiceLines.flatMap((invoiceLine) => {
     const poLine = findPoLine(invoiceLine.sku, fixture.purchaseOrderLines);
@@ -84,7 +96,7 @@ export function buildDisputePacket(fixture = disputeFixture): DisputePacket {
       delta,
       rationale: rationaleParts.join("; "),
       evidence,
-      severity: delta >= 600 ? "high" : "medium"
+      severity: classifySeverity(delta)
     } satisfies Variance];
   });
 
