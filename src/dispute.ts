@@ -40,9 +40,12 @@ function findEmailEvidence(sku: string, notes: EmailNote[]) {
     "TEMP-PROBE": ["temperature probe"]
   };
 
-  const hints = skuHints[sku] ?? [sku.toLowerCase()];
+  const hints = [...(skuHints[sku] ?? []), sku];
   return notes
-    .filter((note) => hints.some((hint) => note.excerpt.toLowerCase().includes(hint.toLowerCase())))
+    .filter((note) => {
+      const searchableNoteText = `${note.subject} ${note.excerpt}`.toLowerCase();
+      return hints.some((hint) => searchableNoteText.includes(hint.toLowerCase()));
+    })
     .map((note) => `${note.sentAt} ${note.subject}: ${note.excerpt}`);
 }
 

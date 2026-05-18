@@ -61,6 +61,44 @@ describe("invoice dispute packet", () => {
     expect(packet.variances[1].evidence.join(" ")).toContain("do not approve rush freight");
   });
 
+  it("matches email evidence when the subject carries the source cue", () => {
+    const packet = buildDisputePacket({
+      ...disputeFixture,
+      emailNotes: [
+        {
+          from: "ap-review@example.invalid",
+          sentAt: "2026-05-03 10:15",
+          subject: "TEMP-PROBE receiving exception",
+          excerpt: "The receiving log confirms only one unit was accepted."
+        }
+      ],
+      invoiceLines: [
+        {
+          sku: "TEMP-PROBE",
+          description: "Temperature probe",
+          quantity: 2,
+          unitPrice: 86
+        }
+      ],
+      purchaseOrderLines: [
+        {
+          sku: "TEMP-PROBE",
+          description: "Temperature probe",
+          quantity: 1,
+          unitPrice: 86,
+          approvedQuantity: 1,
+          approvedUnitPrice: 86
+        }
+      ],
+      deliveryProof: {
+        ...disputeFixture.deliveryProof,
+        acceptedSkus: [{ sku: "TEMP-PROBE", quantity: 1 }]
+      }
+    });
+
+    expect(packet.variances[0].evidence.join(" ")).toContain("TEMP-PROBE receiving exception");
+  });
+
   it("makes no-dispute memos explicit when no positive variances are found", () => {
     const memo = buildMemo("Aster Supply Co.", "INV-00001", 0, []);
 
