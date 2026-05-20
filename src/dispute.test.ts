@@ -132,6 +132,31 @@ describe("invoice dispute packet", () => {
     expect(packet.variances[0].rationale).toContain("unit price billed at $128.00 vs approved $120.00");
   });
 
+  it("sums duplicate delivery rows for the same normalized SKU", () => {
+    const packet = buildDisputePacket({
+      ...disputeFixture,
+      invoiceLines: [
+        {
+          sku: "TEMP-PROBE",
+          description: "Temperature probe",
+          quantity: 2,
+          unitPrice: 86
+        }
+      ],
+      purchaseOrderLines: [],
+      deliveryProof: {
+        ...disputeFixture.deliveryProof,
+        acceptedSkus: [
+          { sku: " temp-probe ", quantity: 0 },
+          { sku: "TEMP-PROBE", quantity: 2 }
+        ]
+      }
+    });
+
+    expect(packet.variances[0].evidence.join(" ")).toContain("received 2 units");
+    expect(packet.variances[0].rationale).not.toContain("line has no receiving proof");
+  });
+
   it("makes no-dispute memos explicit when no positive variances are found", () => {
     const memo = buildMemo("Aster Supply Co.", "INV-00001", 0, []);
 

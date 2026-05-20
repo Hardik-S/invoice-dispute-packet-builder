@@ -40,7 +40,9 @@ function findPoLine(sku: string, poLines: PurchaseOrderLine[]) {
 
 function findAcceptedQuantity(sku: string, acceptedSkus: Array<{ sku: string; quantity: number }>): number {
   const normalizedSku = normalizeSku(sku);
-  return acceptedSkus.find((entry) => normalizeSku(entry.sku) === normalizedSku)?.quantity ?? 0;
+  return acceptedSkus
+    .filter((entry) => normalizeSku(entry.sku) === normalizedSku)
+    .reduce((sum, entry) => sum + entry.quantity, 0);
 }
 
 function findEmailEvidence(sku: string, notes: EmailNote[]) {
