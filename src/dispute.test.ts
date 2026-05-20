@@ -99,6 +99,39 @@ describe("invoice dispute packet", () => {
     expect(packet.variances[0].evidence.join(" ")).toContain("TEMP-PROBE receiving exception");
   });
 
+  it("matches invoice, purchase order, and delivery rows with padded SKU fields", () => {
+    const packet = buildDisputePacket({
+      ...disputeFixture,
+      invoiceLines: [
+        {
+          sku: " LAB-KIT-40 ",
+          description: "Field sampling kit",
+          quantity: 42,
+          unitPrice: 128
+        }
+      ],
+      purchaseOrderLines: [
+        {
+          sku: "LAB-KIT-40",
+          description: "Field sampling kit",
+          quantity: 40,
+          unitPrice: 120,
+          approvedQuantity: 40,
+          approvedUnitPrice: 120
+        }
+      ],
+      deliveryProof: {
+        ...disputeFixture.deliveryProof,
+        acceptedSkus: [{ sku: "LAB-KIT-40", quantity: 40 }]
+      }
+    });
+
+    expect(packet.disputedTotal).toBe(576);
+    expect(packet.variances[0].sku).toBe("LAB-KIT-40");
+    expect(packet.variances[0].rationale).toContain("quantity billed as 42 vs approved 40");
+    expect(packet.variances[0].rationale).toContain("unit price billed at $128.00 vs approved $120.00");
+  });
+
   it("makes no-dispute memos explicit when no positive variances are found", () => {
     const memo = buildMemo("Aster Supply Co.", "INV-00001", 0, []);
 

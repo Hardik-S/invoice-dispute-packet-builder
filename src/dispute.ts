@@ -29,8 +29,18 @@ export function lineTotal(line: Pick<InvoiceLine, "quantity" | "unitPrice">): nu
   return money(line.quantity * line.unitPrice);
 }
 
+function normalizeSku(sku: string): string {
+  return sku.trim().toUpperCase();
+}
+
 function findPoLine(sku: string, poLines: PurchaseOrderLine[]) {
-  return poLines.find((line) => line.sku === sku);
+  const normalizedSku = normalizeSku(sku);
+  return poLines.find((line) => normalizeSku(line.sku) === normalizedSku);
+}
+
+function findAcceptedQuantity(sku: string, acceptedSkus: Array<{ sku: string; quantity: number }>): number {
+  const normalizedSku = normalizeSku(sku);
+  return acceptedSkus.find((entry) => normalizeSku(entry.sku) === normalizedSku)?.quantity ?? 0;
 }
 
 function findEmailEvidence(sku: string, notes: EmailNote[]) {
@@ -40,7 +50,8 @@ function findEmailEvidence(sku: string, notes: EmailNote[]) {
     "TEMP-PROBE": ["temperature probe"]
   };
 
-  const hints = [...(skuHints[sku] ?? []), sku];
+  const normalizedSku = normalizeSku(sku);
+  const hints = [...(skuHints[normalizedSku] ?? []), normalizedSku];
   return notes
     .filter((note) => {
       const searchableNoteText = `${note.subject} ${note.excerpt}`.toLowerCase();
@@ -63,8 +74,9 @@ function classifySeverity(delta: number): Variance["severity"] {
 
 export function buildDisputePacket(fixture = disputeFixture): DisputePacket {
   const variances = fixture.invoiceLines.flatMap((invoiceLine) => {
+    const normalizedSku = normalizeSku(invoiceLine.sku);
     const poLine = findPoLine(invoiceLine.sku, fixture.purchaseOrderLines);
-    const acceptedQuantity = fixture.deliveryProof.acceptedSkus.find((entry) => entry.sku === invoiceLine.sku)?.quantity ?? 0;
+    const acceptedQuantity = findAcceptedQuantity(invoiceLine.sku, fixture.deliveryProof.acceptedSkus);
     const expectedQuantity = poLine?.approvedQuantity ?? acceptedQuantity;
     const expectedUnitPrice = poLine?.approvedUnitPrice ?? 0;
     const invoiceAmount = lineTotal(invoiceLine);
@@ -92,7 +104,7 @@ export function buildDisputePacket(fixture = disputeFixture): DisputePacket {
     ].filter(Boolean);
 
     return [{
-      sku: invoiceLine.sku,
+      sku: normalizedSku,
       label: invoiceLine.description,
       invoiceAmount,
       expectedAmount,
