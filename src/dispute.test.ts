@@ -235,6 +235,44 @@ describe("invoice dispute packet", () => {
     expect(packet.variances[0].rationale).toContain("quantity billed as 5 vs approved 4");
   });
 
+  it("ignores blank invoice rows from pasted exports", () => {
+    const packet = buildDisputePacket({
+      ...disputeFixture,
+      invoiceLines: [
+        {
+          sku: "   ",
+          description: "Blank worksheet spacer",
+          quantity: 1,
+          unitPrice: 999
+        },
+        {
+          sku: "TEMP-PROBE",
+          description: "Temperature probe",
+          quantity: 1,
+          unitPrice: 86
+        }
+      ],
+      purchaseOrderLines: [
+        {
+          sku: "TEMP-PROBE",
+          description: "Temperature probe",
+          quantity: 1,
+          unitPrice: 86,
+          approvedQuantity: 1,
+          approvedUnitPrice: 86
+        }
+      ],
+      deliveryProof: {
+        ...disputeFixture.deliveryProof,
+        acceptedSkus: [{ sku: "TEMP-PROBE", quantity: 1 }]
+      }
+    });
+
+    expect(packet.invoiceTotal).toBe(86);
+    expect(packet.disputedTotal).toBe(0);
+    expect(packet.variances.map((variance) => variance.sku)).not.toContain("");
+  });
+
   it("makes no-dispute memos explicit when no positive variances are found", () => {
     const memo = buildMemo("Aster Supply Co.", "INV-00001", 0, []);
 
