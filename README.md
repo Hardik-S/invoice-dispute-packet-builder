@@ -44,6 +44,7 @@ npm run preview
 - Severity thresholds are explicit: disputes below $100 stay low priority, disputes from $100 to $599.99 are medium, and disputes at $600 or more are high. This keeps nuisance variances visible without overstating their review priority.
 - Email evidence matching searches both subject and excerpt text because forwarding chains often carry the SKU or exception cue in the subject while the excerpt holds only the operational detail.
 - SKU matching trims and uppercases invoice, purchase-order, and delivery rows before comparison. This mirrors pasted AP exports where cell padding should not turn an approved line into a false full-balance dispute.
+- Blank invoice SKU rows are ignored before totals and variance checks. Export spacer rows should not become vendor-facing dispute lines or inflate the held amount.
 - Invoice lines are summed across duplicate normalized SKU rows before variance checks. Split invoice exports should still compare the total billed quantity and amount against the approved PO and receiving evidence.
 - Receiving quantities are summed across duplicate normalized SKU rows before rationale generation. Split export rows should not create a false "no receiving proof" claim when the combined receiving evidence supports the billed quantity.
 - Purchase-order approvals are summed across duplicate normalized SKU rows before variance checks. Split PO exports should not turn two valid approvals into a false overbilling dispute just because the first matching row is partial.

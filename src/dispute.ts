@@ -42,6 +42,10 @@ function summarizeInvoiceLines(invoiceLines: InvoiceLine[]): InvoiceLineSummary[
 
   for (const line of invoiceLines) {
     const normalizedSku = normalizeSku(line.sku);
+    if (!normalizedSku) {
+      continue;
+    }
+
     const existing = summaries.get(normalizedSku);
 
     if (!existing) {
@@ -161,7 +165,7 @@ export function buildDisputePacket(fixture = disputeFixture): DisputePacket {
     } satisfies Variance];
   });
 
-  const invoiceTotal = money(fixture.invoiceLines.reduce((sum, line) => sum + lineTotal(line), 0));
+  const invoiceTotal = money(invoiceLineSummaries.reduce((sum, line) => sum + line.invoiceAmount, 0));
   const expectedTotal = money(invoiceTotal - variances.reduce((sum, item) => sum + item.delta, 0));
   const disputedTotal = money(invoiceTotal - expectedTotal);
 
