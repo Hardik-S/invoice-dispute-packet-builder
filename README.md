@@ -45,6 +45,7 @@ npm run preview
 - Email evidence matching searches both subject and excerpt text because forwarding chains often carry the SKU or exception cue in the subject while the excerpt holds only the operational detail.
 - SKU matching trims and uppercases invoice, purchase-order, and delivery rows before comparison. This mirrors pasted AP exports where cell padding should not turn an approved line into a false full-balance dispute.
 - Receiving quantities are summed across duplicate normalized SKU rows before rationale generation. Split export rows should not create a false "no receiving proof" claim when the combined receiving evidence supports the billed quantity.
+- Purchase-order approvals are summed across duplicate normalized SKU rows before variance checks. Split PO exports should not turn two valid approvals into a false overbilling dispute just because the first matching row is partial.
 - The app remains public because all data is synthetic and no sensitive finance systems are connected.
 
 ## Limitations
