@@ -33,9 +33,22 @@ function normalizeSku(sku: string): string {
   return sku.trim().toUpperCase();
 }
 
-function findPoLine(sku: string, poLines: PurchaseOrderLine[]) {
+function findPoSummary(sku: string, poLines: PurchaseOrderLine[]) {
   const normalizedSku = normalizeSku(sku);
-  return poLines.find((line) => normalizeSku(line.sku) === normalizedSku);
+  const matches = poLines.filter((line) => normalizeSku(line.sku) === normalizedSku);
+
+  if (matches.length === 0) {
+    return undefined;
+  }
+
+  const approvedQuantity = matches.reduce((sum, line) => sum + line.approvedQuantity, 0);
+  const approvedAmount = money(matches.reduce(
+    (sum, line) => sum + line.approvedQuantity * line.approvedUnitPrice,
+    0
+  ));
+  const approvedUnitPrice = approvedQuantity === 0 ? 0 : money(approvedAmount / approvedQuantity);
+
+  return { approvedQuantity, approvedUnitPrice, approvedAmount };
 }
 
 function findAcceptedQuantity(sku: string, acceptedSkus: Array<{ sku: string; quantity: number }>): number {
@@ -77,12 +90,12 @@ function classifySeverity(delta: number): Variance["severity"] {
 export function buildDisputePacket(fixture = disputeFixture): DisputePacket {
   const variances = fixture.invoiceLines.flatMap((invoiceLine) => {
     const normalizedSku = normalizeSku(invoiceLine.sku);
-    const poLine = findPoLine(invoiceLine.sku, fixture.purchaseOrderLines);
+    const poSummary = findPoSummary(invoiceLine.sku, fixture.purchaseOrderLines);
     const acceptedQuantity = findAcceptedQuantity(invoiceLine.sku, fixture.deliveryProof.acceptedSkus);
-    const expectedQuantity = poLine?.approvedQuantity ?? acceptedQuantity;
-    const expectedUnitPrice = poLine?.approvedUnitPrice ?? 0;
+    const expectedQuantity = poSummary?.approvedQuantity ?? acceptedQuantity;
+    const expectedUnitPrice = poSummary?.approvedUnitPrice ?? 0;
     const invoiceAmount = lineTotal(invoiceLine);
-    const expectedAmount = money(expectedQuantity * expectedUnitPrice);
+    const expectedAmount = poSummary?.approvedAmount ?? money(expectedQuantity * expectedUnitPrice);
     const delta = money(invoiceAmount - expectedAmount);
 
     if (delta <= 0) {
