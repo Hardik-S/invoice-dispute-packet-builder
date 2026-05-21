@@ -21,6 +21,10 @@ export type DisputePacket = {
 
 const currency = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 
+type InvoiceLineSummary = Pick<InvoiceLine, "sku" | "description" | "quantity" | "unitPrice"> & {
+  invoiceAmount: number;
+};
+
 function money(value: number): number {
   return Math.round((value + Number.EPSILON) * 100) / 100;
 }
@@ -31,6 +35,32 @@ export function lineTotal(line: Pick<InvoiceLine, "quantity" | "unitPrice">): nu
 
 function normalizeSku(sku: string): string {
   return sku.trim().toUpperCase();
+}
+
+function summarizeInvoiceLines(invoiceLines: InvoiceLine[]): InvoiceLineSummary[] {
+  const summaries = new Map<string, InvoiceLineSummary>();
+
+  for (const line of invoiceLines) {
+    const normalizedSku = normalizeSku(line.sku);
+    const existing = summaries.get(normalizedSku);
+
+    if (!existing) {
+      summaries.set(normalizedSku, {
+        sku: normalizedSku,
+        description: line.description,
+        quantity: line.quantity,
+        unitPrice: line.unitPrice,
+        invoiceAmount: lineTotal(line)
+      });
+      continue;
+    }
+
+    existing.quantity += line.quantity;
+    existing.invoiceAmount = money(existing.invoiceAmount + lineTotal(line));
+    existing.unitPrice = existing.quantity === 0 ? 0 : money(existing.invoiceAmount / existing.quantity);
+  }
+
+  return [...summaries.values()];
 }
 
 function findPoSummary(sku: string, poLines: PurchaseOrderLine[]) {
@@ -88,13 +118,14 @@ function classifySeverity(delta: number): Variance["severity"] {
 }
 
 export function buildDisputePacket(fixture = disputeFixture): DisputePacket {
-  const variances = fixture.invoiceLines.flatMap((invoiceLine) => {
+  const invoiceLineSummaries = summarizeInvoiceLines(fixture.invoiceLines);
+  const variances = invoiceLineSummaries.flatMap((invoiceLine) => {
     const normalizedSku = normalizeSku(invoiceLine.sku);
     const poSummary = findPoSummary(invoiceLine.sku, fixture.purchaseOrderLines);
     const acceptedQuantity = findAcceptedQuantity(invoiceLine.sku, fixture.deliveryProof.acceptedSkus);
     const expectedQuantity = poSummary?.approvedQuantity ?? acceptedQuantity;
     const expectedUnitPrice = poSummary?.approvedUnitPrice ?? 0;
-    const invoiceAmount = lineTotal(invoiceLine);
+    const invoiceAmount = invoiceLine.invoiceAmount;
     const expectedAmount = poSummary?.approvedAmount ?? money(expectedQuantity * expectedUnitPrice);
     const delta = money(invoiceAmount - expectedAmount);
 
