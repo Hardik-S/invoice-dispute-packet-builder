@@ -85,6 +85,16 @@ function findPoSummary(sku: string, poLines: PurchaseOrderLine[]) {
   return { approvedQuantity, approvedUnitPrice, approvedAmount };
 }
 
+function buildPoEvidence(purchaseOrderId: string, sku: string, poSummary: ReturnType<typeof findPoSummary>): string {
+  const normalizedSku = normalizeSku(sku);
+
+  if (!poSummary) {
+    return `No purchase-order approval found for ${normalizedSku}.`;
+  }
+
+  return `PO ${purchaseOrderId} approved ${poSummary.approvedQuantity} units at ${currency.format(poSummary.approvedUnitPrice)}.`;
+}
+
 function findAcceptedQuantity(sku: string, acceptedSkus: Array<{ sku: string; quantity: number }>): number {
   const normalizedSku = normalizeSku(sku);
   return acceptedSkus
@@ -141,7 +151,7 @@ export function buildDisputePacket(fixture = disputeFixture): DisputePacket {
     const priceIssue = invoiceLine.unitPrice !== expectedUnitPrice;
     const noReceipt = acceptedQuantity === 0 && invoiceLine.quantity > 0;
     const evidence = [
-      `PO ${fixture.purchaseOrderId} approved ${expectedQuantity} units at ${currency.format(expectedUnitPrice)}.`,
+      buildPoEvidence(fixture.purchaseOrderId, invoiceLine.sku, poSummary),
       `Delivery ${fixture.deliveryProof.shipmentId} received ${acceptedQuantity} units on ${fixture.deliveryProof.deliveredOn}.`,
       fixture.deliveryProof.exceptionNote,
       ...findEmailEvidence(invoiceLine.sku, fixture.emailNotes)
