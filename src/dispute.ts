@@ -150,6 +150,7 @@ export function buildDisputePacket(fixture = disputeFixture): DisputePacket {
     const quantityIssue = invoiceLine.quantity !== expectedQuantity;
     const priceIssue = invoiceLine.unitPrice !== expectedUnitPrice;
     const noReceipt = acceptedQuantity === 0 && invoiceLine.quantity > 0;
+    const missingPoApproval = !poSummary;
     const evidence = [
       buildPoEvidence(fixture.purchaseOrderId, invoiceLine.sku, poSummary),
       `Delivery ${fixture.deliveryProof.shipmentId} received ${acceptedQuantity} units on ${fixture.deliveryProof.deliveredOn}.`,
@@ -158,8 +159,9 @@ export function buildDisputePacket(fixture = disputeFixture): DisputePacket {
     ];
 
     const rationaleParts = [
+      missingPoApproval ? "no purchase-order approval found" : "",
       quantityIssue ? `quantity billed as ${invoiceLine.quantity} vs approved ${expectedQuantity}` : "",
-      priceIssue ? `unit price billed at ${currency.format(invoiceLine.unitPrice)} vs approved ${currency.format(expectedUnitPrice)}` : "",
+      priceIssue && !missingPoApproval ? `unit price billed at ${currency.format(invoiceLine.unitPrice)} vs approved ${currency.format(expectedUnitPrice)}` : "",
       noReceipt ? "line has no receiving proof" : ""
     ].filter(Boolean);
 

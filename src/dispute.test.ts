@@ -295,6 +295,28 @@ describe("invoice dispute packet", () => {
     expect(packet.variances[0].evidence.join(" ")).not.toContain("approved 0 units");
   });
 
+  it("does not phrase missing purchase-order approvals as zero-dollar approvals", () => {
+    const packet = buildDisputePacket({
+      ...disputeFixture,
+      invoiceLines: [
+        {
+          sku: "MISC-SVC",
+          description: "Unapproved service fee",
+          quantity: 1,
+          unitPrice: 250
+        }
+      ],
+      purchaseOrderLines: [],
+      deliveryProof: {
+        ...disputeFixture.deliveryProof,
+        acceptedSkus: []
+      }
+    });
+
+    expect(packet.variances[0].rationale).toContain("no purchase-order approval found");
+    expect(packet.variances[0].rationale).not.toContain("approved $0.00");
+  });
+
   it("makes no-dispute memos explicit when no positive variances are found", () => {
     const memo = buildMemo("Aster Supply Co.", "INV-00001", 0, []);
 

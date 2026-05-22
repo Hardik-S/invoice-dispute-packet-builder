@@ -49,6 +49,7 @@ npm run preview
 - Receiving quantities are summed across duplicate normalized SKU rows before rationale generation. Split export rows should not create a false "no receiving proof" claim when the combined receiving evidence supports the billed quantity.
 - Purchase-order approvals are summed across duplicate normalized SKU rows before variance checks. Split PO exports should not turn two valid approvals into a false overbilling dispute just because the first matching row is partial.
 - Missing purchase-order rows are called out as missing approvals instead of being phrased as zero-unit approvals. A zero approval is a real PO decision; an absent row is an evidence gap.
+- Missing purchase-order rows are also kept out of approved-price rationale. An absent approval should not read like AP approved a zero-dollar unit price.
 - The app remains public because all data is synthetic and no sensitive finance systems are connected.
 
 ## Limitations
