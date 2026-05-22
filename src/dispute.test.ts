@@ -273,6 +273,51 @@ describe("invoice dispute packet", () => {
     expect(packet.variances.map((variance) => variance.sku)).not.toContain("");
   });
 
+  it("ignores placeholder invoice SKU rows from pasted exports", () => {
+    const packet = buildDisputePacket({
+      ...disputeFixture,
+      invoiceLines: [
+        {
+          sku: "N/A",
+          description: "Export placeholder row",
+          quantity: 1,
+          unitPrice: 999
+        },
+        {
+          sku: " tbd ",
+          description: "Draft worksheet row",
+          quantity: 1,
+          unitPrice: 500
+        },
+        {
+          sku: "TEMP-PROBE",
+          description: "Temperature probe",
+          quantity: 1,
+          unitPrice: 86
+        }
+      ],
+      purchaseOrderLines: [
+        {
+          sku: "TEMP-PROBE",
+          description: "Temperature probe",
+          quantity: 1,
+          unitPrice: 86,
+          approvedQuantity: 1,
+          approvedUnitPrice: 86
+        }
+      ],
+      deliveryProof: {
+        ...disputeFixture.deliveryProof,
+        acceptedSkus: [{ sku: "TEMP-PROBE", quantity: 1 }]
+      }
+    });
+
+    expect(packet.invoiceTotal).toBe(86);
+    expect(packet.disputedTotal).toBe(0);
+    expect(packet.variances.map((variance) => variance.sku)).not.toContain("N/A");
+    expect(packet.variances.map((variance) => variance.sku)).not.toContain("TBD");
+  });
+
   it("makes missing purchase-order approvals explicit in evidence", () => {
     const packet = buildDisputePacket({
       ...disputeFixture,
