@@ -20,6 +20,7 @@ export type DisputePacket = {
 };
 
 const currency = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+const placeholderSkus = new Set(["-", "N/A", "NA", "NONE", "TBD"]);
 
 type InvoiceLineSummary = Pick<InvoiceLine, "sku" | "description" | "quantity" | "unitPrice"> & {
   invoiceAmount: number;
@@ -34,7 +35,8 @@ export function lineTotal(line: Pick<InvoiceLine, "quantity" | "unitPrice">): nu
 }
 
 function normalizeSku(sku: string): string {
-  return sku.trim().toUpperCase();
+  const normalizedSku = sku.trim().toUpperCase();
+  return placeholderSkus.has(normalizedSku) ? "" : normalizedSku;
 }
 
 function summarizeInvoiceLines(invoiceLines: InvoiceLine[]): InvoiceLineSummary[] {
